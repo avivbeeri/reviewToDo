@@ -1,0 +1,19 @@
+{
+  "name": "reviewToDo",
+  "version": "0.0.1",
+  "description": "A to-do list based on a user's bitbucket pull requests.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "todo",
+    "bitbucket"
+  ],
+  "author": "Aviv Beeri",
+  "license": "MIT",
+  "dependencies": {
+    "blessed": "~0.1.81",
+    "node-rest-client": "~1.5.1"
+  }
+}
