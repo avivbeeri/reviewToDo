@@ -2,6 +2,8 @@ var blessed = require('blessed'),
     Client  = require('node-rest-client').Client,
     bucketAPI = require('./bitbucket');
 
+var LoginScreen = require('./loginScreen');
+
 var userData = {
     username: undefined
 };
@@ -49,111 +51,20 @@ var box = blessed.box({
 });
 // Append our box to the screen.
 screen.append(box);
+var loginScreen = new LoginScreen();
+loginScreen.attachTo(screen);
 
-var form = blessed.form({
-    parent: box,
-    width: '50%',
-    height: 7,
-    border: {
-        type: 'line'
-    },
-    keys: true,
-    tags: true,
-    top: 'center',
-    left: 'center'
 
-});
-
-blessed.text({
-    parent: form,
-    content: "Username:"
-});
-
-var usernameInput = blessed.textbox({
-    parent: form,
-    name: 'username',
-    height: 1,
-    top: 1,
-    inputOnFocus: true,
-    style: {
-            fg: '#f6f6f6',
-            bg: '#353535'
-    },
-});
-
-blessed.text({
-    parent: form,
-    content: "Password:",
-    top: 2
-});
-
-var passwordInput = blessed.textbox({
-    parent: form,
-    name: 'password',
-    top: 3,
-    height: 1,
-    inputOnFocus: true,
-    censor: true,
-    style: {
-            fg: '#f6f6f6',
-            bg: '#353535'
-    }
-});
-
-var submit = blessed.button({
-  parent: form,
-  mouse: true,
-  keys: true,
-  shrink: true,
-  padding: {
-    left: 1,
-    right: 1
-  },
-  left: 'center',
-  width: 10,
-  top: 4,
-  name: 'submit',
-  content: 'submit',
-  style: {
-    focus: {
-       bg: 'blue',
-       fg: 'white'
-    },
-    hover: {
-      bg: 'blue',
-      fg: 'white'
-    }
-  },
-  border: {
-    type: 'line'
-  }
-});
-
-form.on('submit', function (data) {
-    //client = createClient(data.username, data.password);
-
+loginScreen.on('submit', function (data) {
     // Check the credentials, then remove the loginForm.
-    box.remove(form);
+
     client = new bucketAPI(data.username, data.password);
     client.getAllRepositories().then(function (results) {
+        loginScreen.detach();
         box.setText(JSON.stringify(results));
         screen.render();
     });
-    //client.methods.getAllTeams(function (data, response) {
-
-
-    //});
 });
-
-submit.on('press', function () {
-    form.submit();
-})
-// Focus on `escape` or `i` when focus is on the screen.
-screen.key(['tab'], function() {
-    // Set the focus on the input.
-    form.focusNext();
-});
-form.focus();
 
 // Render the screen.
 screen.render();
