@@ -1,5 +1,6 @@
 var blessed = require('blessed'),
-    Client  = require('node-rest-client').Client;
+    Client  = require('node-rest-client').Client,
+    bucketAPI = require('./bitbucket');
 
 var userData = {
     username: undefined
@@ -15,10 +16,6 @@ function createClient(username, password) {
 
     return client;
 }
-
-
-
-
 
 var screen = blessed.screen({
     smartCSR: true
@@ -133,15 +130,19 @@ var submit = blessed.button({
 });
 
 form.on('submit', function (data) {
-    client = createClient(data.username, data.password);
+    //client = createClient(data.username, data.password);
 
     // Check the credentials, then remove the loginForm.
     box.remove(form);
-    client.methods.getAllTeams(function (data, response) {
-        var info = JSON.parse(data);
-        box.setText(JSON.stringify(info));
+    client = new bucketAPI(data.username, data.password);
+    client.getAllRepositories().then(function (results) {
+        box.setText(JSON.stringify(results));
         screen.render();
     });
+    //client.methods.getAllTeams(function (data, response) {
+
+
+    //});
 });
 
 submit.on('press', function () {
