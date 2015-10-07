@@ -7,7 +7,12 @@ module.exports = function (user, pass) {
         var client = new Client(optionsAuth);
         client.registerMethod("getAllTeams", "https://api.bitbucket.org/2.0/teams/?role=member", "GET");
         client.registerMethod("getRepositories", "https://api.bitbucket.org/2.0/repositories/${owner}", "GET");
-        client.registerMethod("getPullRequests", "https://api.bitbucket.org/2.0/repositories/${slug}/pullrequests?state=OPEN", "GET");
+        client.registerMethod("getPullRequests", "https://api.bitbucket.org/2.0/repositories/${slug}/pullrequests?state=MERGED", "GET");
+        client.registerMethod("getPullRequestComments",
+                              "https://bitbucket.org/api/2.0/repositories/${slug}/pullrequests/${id}/comments", "GET");
+
+
+        //getPRComments(id)
         //
 
         this.getAllRepositories = function () {
@@ -53,6 +58,24 @@ module.exports = function (user, pass) {
 
             return deferred.promise;
         };
+
+        this.getPullRequestComments = function (slug, id) {
+
+            var deferred = q.defer();
+            var options = {
+                path: {
+                    "slug": slug,
+                    "id": id
+                }
+            };
+            var deferred = q.defer();
+            client.methods.getPullRequestComments(options, function (data) {
+                var response = JSON.parse(data);
+                deferred.resolve(response.values);
+            });
+
+            return deferred.promise;
+        }
 
         return this;
 };

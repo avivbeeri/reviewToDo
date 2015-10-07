@@ -69,10 +69,13 @@ list.on('select', function getRepos(item, index) {
         list.setItems(requestNames);
         list.focus();
         list.remove('submit', getRepos);
-        console.log(requests);
 
-        list.on('select', function (getComments) {
-
+        list.on('select', function (item, index) {
+            var id = requests[index].id;
+            client.getPullRequestComments(repoName, id).then(function (comments) {
+                var commentContent = _.pluck(comments, "content");
+                list.setItems(commentContent);
+            });
         });
         screen.render();
     });
