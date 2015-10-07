@@ -21,8 +21,8 @@ screen.key(['escape', 'q', 'C-c', 'C-d'], function(ch, key) {
 });
 
 
-// Create a box perfectly centered horizontally and vertically.
-var box = blessed.list({
+// Create a list perfectly centered horizontally and vertically.
+var list = blessed.list({
     top: 'center',
     left: 'center',
     width: '95%',
@@ -48,7 +48,6 @@ screen.append(list);
 var loginScreen = new LoginScreen();
 loginScreen.attachTo(screen);
 
-
 loginScreen.on('submit', function (data) {
     // Check the credentials, then remove the loginForm.
     client = new bucketAPI(data.username, data.password);
@@ -60,10 +59,21 @@ loginScreen.on('submit', function (data) {
     });
 });
 
-list.on('select', function (repository) {
-    client.getPullRequests(item).then(function (requests) {
-        list.setItems(requests);
+
+
+list.on('select', function getRepos(item, index) {
+    var repoName = item.content;
+    client.getPullRequests(repoName).then(function (requests) {
+        var requests = _.map(requests, _.partialRight(_.pick, ['title', 'id']));
+        var requestNames = _.pluck(requests, "title");
+        list.setItems(requestNames);
         list.focus();
+        list.remove('submit', getRepos);
+        console.log(requests);
+
+        list.on('select', function (getComments) {
+
+        });
         screen.render();
     });
 });

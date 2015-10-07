@@ -7,6 +7,8 @@ module.exports = function (user, pass) {
         var client = new Client(optionsAuth);
         client.registerMethod("getAllTeams", "https://api.bitbucket.org/2.0/teams/?role=member", "GET");
         client.registerMethod("getRepositories", "https://api.bitbucket.org/2.0/repositories/${owner}", "GET");
+        client.registerMethod("getPullRequests", "https://api.bitbucket.org/2.0/repositories/${slug}/pullrequests?state=OPEN", "GET");
+        //
 
         this.getAllRepositories = function () {
             var deferred = q.defer();
@@ -33,6 +35,22 @@ module.exports = function (user, pass) {
                     deferred.resolve(repositories);
                 });
             });
+            return deferred.promise;
+        };
+
+        this.getPullRequests = function (slug) {
+            var deferred = q.defer();
+            var options = {
+                path: {
+                    "slug": slug
+                }
+            };
+            var deferred = q.defer();
+            client.methods.getPullRequests(options, function (data) {
+                var response = JSON.parse(data);
+                deferred.resolve(response.values);
+            });
+
             return deferred.promise;
         };
 
