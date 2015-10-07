@@ -1,23 +1,13 @@
 var blessed = require('blessed'),
-    Client  = require('node-rest-client').Client,
-    bucketAPI = require('./bitbucket');
+Client  = require('node-rest-client').Client,
+_       = require('lodash'),
+bucketAPI = require('./bitbucket');
 
 var LoginScreen = require('./loginScreen');
 
 var userData = {
     username: undefined
 };
-
-// Configure REST Client
-var client = new Client();
-function createClient(username, password) {
-    userData.username = username;
-    var optionsAuth = {user: username, password: password};
-    var client = new Client(optionsAuth);
-    client.registerMethod("getAllTeams", "https://api.bitbucket.org/2.0/teams/?role=member", "GET");
-
-    return client;
-}
 
 var screen = blessed.screen({
     smartCSR: true
@@ -27,17 +17,17 @@ screen.title = 'reviewToDo';
 
 // Quit on Escape, q, or Control-C.
 screen.key(['escape', 'q', 'C-c', 'C-d'], function(ch, key) {
-  return process.exit(0);
+    return process.exit(0);
 });
 
 
 // Create a box perfectly centered horizontally and vertically.
-var box = blessed.box({
+var box = blessed.list({
     top: 'center',
     left: 'center',
     width: '95%',
     height: '95%',
-    content: 'Hello {bold}world{/bold}!',
+    keys: true,
     tags: true,
     border: {
         type: 'line'
@@ -46,25 +36,39 @@ var box = blessed.box({
         fg: 'white',
         border: {
             fg: '#f0f0f0'
+        },
+        selected: {
+            bg: 'white'
         }
-    }
+    },
+
 });
-// Append our box to the screen.
-screen.append(box);
+// Append our list to the screen.
+screen.append(list);
 var loginScreen = new LoginScreen();
 loginScreen.attachTo(screen);
 
 
 loginScreen.on('submit', function (data) {
     // Check the credentials, then remove the loginForm.
-
     client = new bucketAPI(data.username, data.password);
     client.getAllRepositories().then(function (results) {
         loginScreen.detach();
-        box.setText(JSON.stringify(results));
+        list.setItems(_.flatten(results));
+        list.focus();
         screen.render();
     });
 });
+
+list.on('select', function (repository) {
+    client.getPullRequests(item).then(function (requests) {
+        list.setItems(requests);
+        list.focus();
+        screen.render();
+    });
+});
+
+
 
 // Render the screen.
 screen.render();
