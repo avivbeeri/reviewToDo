@@ -18,6 +18,7 @@ function LoginScreen() {
     }
 
     this.onAttach = function () {
+        form.focus();
         usernameInput.focus();
     };
 

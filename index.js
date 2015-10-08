@@ -16,7 +16,7 @@ var screen = blessed.screen({
 screen.title = 'reviewToDo';
 
 // Quit on Escape, q, or Control-C.
-screen.key(['escape', 'q', 'C-c', 'C-d'], function(ch, key) {
+screen.key(['escape', 'C-c', 'C-d'], function(ch, key) {
     return process.exit(0);
 });
 
@@ -62,23 +62,33 @@ loginScreen.on('submit', function (data) {
 
 
 list.on('select', function getRepos(item, index) {
+    list.off('select', getRepos);
     var repoName = item.content;
     client.getPullRequests(repoName).then(function (requests) {
         var requests = _.map(requests, _.partialRight(_.pick, ['title', 'id']));
         var requestNames = _.pluck(requests, "title");
         list.setItems(requestNames);
         list.focus();
-        list.remove('submit', getRepos);
+        screen.render();
 
-        list.on('select', function (item, index) {
+        list.on('select', function getComments(item, index) {
+            list.off('select', getComments);
             var id = requests[index].id;
             client.getPullRequestComments(repoName, id).then(function (comments) {
-                var commentContent = _.pluck(comments, "content");
+                var comments = _(comments).reject(function (comment) {
+                    return comment.parent !== undefined;
+                }).map(_.partialRight(_.pick, ["content", 'id', 'user', 'inline'])).value();
+                var commentContent = _.pluck(comments, 'content.raw');
                 list.setItems(commentContent);
+                list.focus();
+                screen.render();
             });
+
         });
-        screen.render();
+
     });
+
+
 });
 
 
