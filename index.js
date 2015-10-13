@@ -4,7 +4,8 @@ var blessed        = require('blessed'),
     BucketAPI      = require('./bitbucket'),
     LoginScreen    = require('./loginScreen'),
     RepoListScreen = require('./repoListScreen'),
-    PullRequestScreen = require('./pullRequestScreen');
+    PullRequestScreen = require('./pullRequestScreen'),
+    CommentsScreen = require('./commentsScreen');
 
 var client;
 
@@ -48,6 +49,7 @@ var list = blessed.list({
 var loginScreen = new LoginScreen();
 var repoScreen = new RepoListScreen();
 var pullRequestScreen = new PullRequestScreen();
+var commentsScreen = new CommentsScreen();
 loginScreen.attachTo(screen);
 
 loginScreen.on('submit', function (data) {
@@ -83,9 +85,14 @@ pullRequestScreen.on('select', function (pullRequest) {
             return comment.parent !== undefined;
         }).map(_.partialRight(_.pick, ['content', 'id', 'user', 'inline'])).value();
         var commentContent = _.pluck(comments, 'content.raw');
+
+        /*
         list.setItems(commentContent);
         list.focus();
-        screen.append(list);
+        */
+        //screen.append(list);
+
+        commentsScreen.attachTo(screen);
         screen.render();
     });
 });
