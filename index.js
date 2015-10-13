@@ -1,8 +1,9 @@
 
-var blessed     = require('blessed'),
-    _           = require('lodash'),
-    BucketAPI   = require('./bitbucket'),
-    LoginScreen = require('./loginScreen');
+var blessed        = require('blessed'),
+    _              = require('lodash'),
+    BucketAPI      = require('./bitbucket'),
+    LoginScreen    = require('./loginScreen'),
+    RepoListScreen = require('./repoListScreen');
 
 var client;
 
@@ -42,8 +43,9 @@ var list = blessed.list({
     }
 });
 // Append our list to the screen.
-screen.append(list);
+
 var loginScreen = new LoginScreen();
+var repoScreen = new RepoListScreen();
 loginScreen.attachTo(screen);
 
 loginScreen.on('submit', function (data) {
@@ -52,23 +54,23 @@ loginScreen.on('submit', function (data) {
     client = new BucketAPI(data.username, data.password);
     client.getAllRepositories().then(function (results) {
         loginScreen.detach();
-        list.setItems(_.flatten(results));
-        list.focus();
+        repoScreen.attachTo(screen, _.flatten(results).sort());
         screen.render();
     });
 });
 
 
 
-list.on('select', function getRepos(item) {
+repoScreen.on('select', function (repoName) {
     'use strict';
-    list.off('select', getRepos);
-    var repoName = item.content;
+    repoScreen.detach();
+
     client.getPullRequests(repoName).then(function (responseValues) {
         var requests = _.map(responseValues, _.partialRight(_.pick, ['title', 'id']));
-        var requestNames = _.pluck(requests, 'title');
+        var requestNames = _.pluck(requests, 'title').sort();
         list.setItems(requestNames);
         list.focus();
+        screen.append(list);
         screen.render();
 
         list.on('select', function getComments(item, index) {
