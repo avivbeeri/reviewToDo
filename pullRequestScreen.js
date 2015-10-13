@@ -1,18 +1,25 @@
 var blessed = require('blessed');
 var EventEmitter = require('events').EventEmitter;
+var _ = require('lodash');
 var util = require('util');
 
 
-function RepoListScreen() {
+function PullRequestScreen() {
     'use strict';
     var self =  this;
     this.parent = undefined;
+    this.requests = undefined;
+
+
     this.attachTo = function (parent, data) {
         parent.append(list);
         self.parent = parent;
-        list.setItems(data);
+
+        self.requests = data;
+        var requestNames = _.pluck(self.requests, 'title').sort();
+
+        list.setItems(requestNames);
         list.focus();
-        self.onAttach();
     };
 
     this.detach = function () {
@@ -40,11 +47,12 @@ function RepoListScreen() {
         }
     });
 
-    list.on('select', function getRepos(item) {
-        var repoName = item.content;
-        self.emit('select', repoName);
+    list.on('select', function (item, index) {
+
+        var request = self.requests[index];
+        self.emit('select', request, index);
     });
 }
 
-util.inherits(RepoListScreen, EventEmitter);
-module.exports = RepoListScreen;
+util.inherits(PullRequestScreen, EventEmitter);
+module.exports = PullRequestScreen;

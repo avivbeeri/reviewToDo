@@ -3,7 +3,8 @@ var blessed        = require('blessed'),
     _              = require('lodash'),
     BucketAPI      = require('./bitbucket'),
     LoginScreen    = require('./loginScreen'),
-    RepoListScreen = require('./repoListScreen');
+    RepoListScreen = require('./repoListScreen'),
+    PullRequestScreen = require('./pullRequestScreen');
 
 var client;
 
@@ -46,6 +47,7 @@ var list = blessed.list({
 
 var loginScreen = new LoginScreen();
 var repoScreen = new RepoListScreen();
+var pullRequestScreen = new PullRequestScreen();
 loginScreen.attachTo(screen);
 
 loginScreen.on('submit', function (data) {
@@ -59,41 +61,34 @@ loginScreen.on('submit', function (data) {
     });
 });
 
-
-
 repoScreen.on('select', function (repoName) {
     'use strict';
     repoScreen.detach();
-
     client.getPullRequests(repoName).then(function (responseValues) {
-        var requests = _.map(responseValues, _.partialRight(_.pick, ['title', 'id']));
-        var requestNames = _.pluck(requests, 'title').sort();
-        list.setItems(requestNames);
+        var requests = _.map(responseValues, _.partialRight(_.pick, ['title', 'id', 'destination']));
+
+        //list.setItems(requestNames);
+        pullRequestScreen.attachTo(screen, requests);
+        screen.render();
+    });
+});
+
+pullRequestScreen.on('select', function (pullRequest) {
+    'use strict';
+    pullRequestScreen.detach();
+    var id = pullRequest.id;
+    var repoName = pullRequest.destination.repository.full_name;
+    client.getPullRequestComments(repoName, id).then(function (responseValues) {
+        var comments = _(responseValues).reject(function (comment) {
+            return comment.parent !== undefined;
+        }).map(_.partialRight(_.pick, ['content', 'id', 'user', 'inline'])).value();
+        var commentContent = _.pluck(comments, 'content.raw');
+        list.setItems(commentContent);
         list.focus();
         screen.append(list);
         screen.render();
-
-        list.on('select', function getComments(item, index) {
-            list.off('select', getComments);
-            var id = requests[index].id;
-            client.getPullRequestComments(repoName, id).then(function (responseValues) {
-                var comments = _(responseValues).reject(function (comment) {
-                    return comment.parent !== undefined;
-                }).map(_.partialRight(_.pick, ['content', 'id', 'user', 'inline'])).value();
-                var commentContent = _.pluck(comments, 'content.raw');
-                list.setItems(commentContent);
-                list.focus();
-                screen.render();
-            });
-
-        });
-
     });
-
-
 });
 
-
-
-// Render the screen.
+// Render the screen for first view.
 screen.render();
